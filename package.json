@@ -12,6 +12,7 @@
     "request": "*",
     "mongoose": "*",
     "express-csv": "*",
+    "q": "*",
     "config": "*"
   }
 }
