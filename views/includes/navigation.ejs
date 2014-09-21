@@ -1,0 +1,24 @@
+<%= activemenu %>
+<div class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container">
+        <div class="navbar-header">
+            <a class="navbar-brand" href="/"><%= app_name %></a>
+        </div>
+        <div class="collapse navbar-collapse">
+            <ul class="nav navbar-nav">
+                <li <% if(activemenu == 'home') { %>class="active"<% } %>><a href="/">Home</a></li>
+
+                <% if(typeof currentresult != 'undefined') {%>
+                    <li <% if(activemenu == 'categories') { %>class="active"<% } %>><a href="/categories/<%= currentresult._id%>">Categories</a></li>
+                    <li <% if(activemenu == 'search') { %>class="active"<% } %>><a href="/search/<%= currentresult._id%>">Search</a></li>
+
+                <% } %>
+            </ul>
+            <% if(typeof currentresult != 'undefined') {%>
+                <div class="pull-right">
+                    <h4><a href="/result/<%= currentresult._id %>">Result run on <%= currentresult.started %> <span class="badge"><%= currentresult.noofbrokenlink %></span></a></h4>
+                </div>
+            <% } %>
+        </div><!--/.nav-collapse -->
+    </div>
+</div>

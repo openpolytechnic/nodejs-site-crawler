@@ -1,0 +1,12 @@
+<% activemenu = '' %>
+<% include header %>
+
+
+<% for(i = 0; i < messages.length; i++) {%>
+    <div class="alert alert-danger" role="alert">
+        <p><%= messages[i] %></p>
+    </div>
+<% } %>
+
+
+<% include footer %>

@@ -1,0 +1,64 @@
+<% activemenu = 'categories' %>
+<% include header %>
+
+<p>There are <%= total %> courses.</p>
+<% if(items != undefined && items.length > 0) { %>
+    <div class="panel panel-default">
+
+        <!-- Table -->
+        <table class="table">
+            <thead>
+            <tr>
+                <th>Title</th>
+                <th>Links</th>
+                <th>No of Broken Links</th>
+                <th>#</th>
+            </tr>
+            </thead>
+            <tbody>
+            <% for(i = 0; i < items.length; i++) {%>
+                <tr>
+                    <td><a href="/link/<%= items[i]._id %>"
+                           class="list-group-item <% if(items[i].brokenurls.length > 0){%>list-group-item-danger<% } else { %>list-group-item-info<%}%>">
+                        <%= items[i].title %></a></td>
+
+                    <td><a href="/link/<%= items[i]._id %>"
+                           class="list-group-item <% if(items[i].brokenurls.length > 0){%>list-group-item-danger<% } else { %>list-group-item-info<%}%>">
+                        <%= items[i].url %></a></td>
+                    <td class="text-center"><span class="badge badge-lg <% if(items[i].brokenurls.length > 0){%>alert-danger<%}%>"><%= items[i].brokenurls.length %></span></td>
+                    <td>
+                        <% if( items[i].getMainTag() ) { %>
+                            <a href="/course/<%= resultid %>/<%= items[i].getMainTag() %>" class="btn btn-primary">View Course Content</a>
+                        <% } else { %>
+                            -
+                        <% } %>
+                    </td>
+                </tr>
+            <% } %>
+            </tbody>
+        </table>
+    </div>
+    <% if(pagination.show) { %>
+        <ul class="pagination pagination-lg">
+            <% if(pagination.hasPrev) { %>
+                <li><a href="<%= pagination.baseurl %>/<%= pagination.offsetPrev %>">&laquo;</a></li>
+            <% } else { %>
+                <li class="disabled"><a href="#">&laquo;</a></li>
+            <% } %>
+            <% for(i = 0; i< pagination.pages.length; i++) { %>
+                <% if(pagination.pages[i].isactive) { %>
+                    <li class="active"><a href="#"><%= pagination.pages[i].index %></a></li>
+                <% } else { %>
+                    <li><a href="<%= pagination.baseurl %>/<%= pagination.pages[i].offset %>"><%= pagination.pages[i].index %></a></li>
+                <% } %>
+            <% } %>
+            <% if(pagination.hasNext) { %>
+                <li><a href="<%= pagination.baseurl %>/<%= pagination.offsetNext %>">&raquo;</a></li>
+            <% } else { %>
+                <li class="disabled"><a href="#">&raquo;</a></li>
+            <% } %>
+        </ul>
+    <% } %>
+<% } %>
+
+<% include footer %>

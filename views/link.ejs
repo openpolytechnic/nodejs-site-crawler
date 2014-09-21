@@ -1,0 +1,142 @@
+<% activemenu = '' %>
+<% include header %>
+
+<% if(item.isbroken) {%>
+<div class="alert alert-danger" role="alert">
+    <h3>This link is broken with response code <%= item.responsecode %></h3>
+</div>
+<% } else { %>
+
+    <% if(item.tags.length > 0) {%>
+        <div>
+            <% for(var i=0; i < item.tags.length; i++) { %>
+                <a href="/tag/<%= item.resultid %>/<%= item.tags[i] %>" class="btn btn-primary"><%= item.tags[i] %></a>
+            <% } %>
+        </div>
+        <hr />
+    <% } %>
+<% } %>
+<%
+var brokenids = [];
+if(item.brokenurls.length > 0) {%>
+    <p>There are <%= item.brokenurls.length %> broken link(s).</p>
+    <div class="panel panel-default">
+        <!-- Default panel contents -->
+        <div class="panel-heading">Broken Links</div>
+
+        <% for(var i=0; i < item.brokenurls.length; i++) {
+            brokenids[item.brokenurls[i]._id] = item.brokenurls[i].url; %>
+            <div class="list-group">
+                <a href="/link/<%= item.brokenurls[i]._id %>" class="list-group-item list-group-item-danger"><%= item.brokenurls[i].url %></a>
+            </div>
+        <% } %>
+    </div>
+    <hr />
+<% } %>
+<% if(item.from.length > 0) {%>
+<p>There are <%= item.from.length %> link(s) come to this url.</p>
+<div class="panel panel-default">
+    <!-- Default panel contents -->
+    <div class="panel-heading">From Links</div>
+    <!-- Table -->
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Title</th>
+            <th>link</th>
+            <th>Text</th>
+            <th>#</th>
+        </tr>
+        </thead>
+        <tbody>
+            <% for(var i=0; i < item.from.length; i++) {%>
+                <tr>
+                    <td><a href="<%= item.from[i].url %>" target="_blank"><%= item.from[i].title %></a></td>
+                    <td><a href="<%= item.from[i].url %>" target="_blank"><%= item.from[i].url %></a></td>
+                    <td><a href="<%= item.from[i].url %>"><%= item.fromlinktext[i] %></a></td>
+                    <td><a href="/link/<%= item.from[i]._id %>" class="btn btn-primary">View Details</a></td>
+                </tr>
+            <% } %>
+        </tbody>
+    </table>
+
+</div>
+<hr />
+<% } %>
+
+<% if(item.to.length > 0) {%>
+    <p>There are <%= item.to.length %> link(s) go from this url.</p>
+    <div class="panel panel-default">
+        <!-- Default panel contents -->
+        <div class="panel-heading">To Links</div>
+        <!-- Table -->
+        <table class="table">
+            <thead>
+            <tr>
+                <th>Title</th>
+                <th>link</th>
+                <th>#</th>
+            </tr>
+            </thead>
+            <tbody>
+
+                <% for(i=0; i < item.to.length; i++) {
+                    if(brokenids[item.to[i]._id] == undefined) {%>
+                    <tr>
+                        <td><a href="<%= item.to[i].url %>" target="_blank"><%= item.to[i].title %></a></td>
+                        <td><a href="<%= item.to[i].url %>" target="_blank"><%= item.to[i].url %></a></td>
+                        <td><a href="/link/<%= item.to[i]._id %>" class="btn btn-primary">View Details</a></td>
+                    </tr>
+                <%  }
+                } %>
+            </tbody>
+        </table>
+    </div>
+    <hr />
+<% } %>
+
+<% if(item.header != undefined) {%>
+<div class="panel panel-default">
+    <!-- Default panel contents -->
+    <div class="panel-heading">Header Information</div>
+    <!-- Table -->
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Field</th>
+                <th>Value</th>
+            </tr>
+        </thead>
+        <tbody>
+        <% if(item.title != undefined) { %>
+        <tr>
+            <td>Title</td>
+            <td><%= item.title %></td>
+        </tr>
+        <% } %>
+
+        <% if(item.header['content-type'] != undefined) { %>
+            <tr>
+                <td>Content Type</td>
+                <td><%= item.header['content-type'] %></td>
+            </tr>
+        <% } %>
+        <% if(item.header['content-length'] != undefined) { %>
+        <tr>
+            <td>Content Size</td>
+            <td><%= item.header['content-length'] %></td>
+        </tr>
+        <% } %>
+        <% if(item.header['date'] != undefined) { %>
+        <tr>
+            <td>Date</td>
+            <td><%= item.header['date'] %></td>
+        </tr>
+        <% } %>
+
+        </tbody>
+    </table>
+</div>
+<hr />
+<% } %>
+<% include footer %>

@@ -1,0 +1,20 @@
+<% activemenu = 'home' %>
+<% include header %>
+
+<% if(typeof results != 'undefined' && results.length > 0) { %>
+    <p>There are <%= results.length %> Moodle Crawl result.</p>
+    <ul class="list-group">
+        <% for(i = 0; i < results.length; i++) {%>
+            <li class="list-group-item <% if(results[i].isrunning) { %>list-group-item-info<% } else { %>list-group-item-success<% } %>">
+                <span class="badge pull-right"><%= results[i].noofbrokenlink %></span>
+                <% if(!results[i].isrunning || true) { %><a href="result/<%= results[i]._id %>" ><% } %>
+                    <%= results[i].started %>
+
+                    <% if(!results[i].isrunning || true) { %></a><% } %>
+            </li>
+        <% } %>
+    </ul>
+<% } else { %>
+    <p>No result for Moodle crawl exist.</p>
+<% } %>
+<% include footer %>
