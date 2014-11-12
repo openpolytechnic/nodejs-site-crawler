@@ -1,7 +1,8 @@
 /**
  * Created by vivraj on 10/09/14.
  */
-var app = require('../app.js');
+var app = require('../app.js')
+    , config = require('config');
 //var dbconnect = mongoose.connect('mongodb://localhost/test');
 var Result = require('../models/crawlerresult.js')(app.get('dbconnect'));
 

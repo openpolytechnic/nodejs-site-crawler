@@ -98,7 +98,7 @@ if(item.brokenurls.length > 0) {%>
 <% if(item.header != undefined) {%>
 <div class="panel panel-default">
     <!-- Default panel contents -->
-    <div class="panel-heading">Header Information</div>
+    <div class="panel-heading">More Information</div>
     <!-- Table -->
     <table class="table">
         <thead>
@@ -131,6 +131,12 @@ if(item.brokenurls.length > 0) {%>
         <tr>
             <td>Date</td>
             <td><%= item.header['date'] %></td>
+        </tr>
+        <% } %>
+        <% if(item.spellmistakes != undefined && item.spellmistakes.length > 0) { %>
+        <tr>
+            <td>Spell mistakes</td>
+            <td><%= item.spellmistakes.join(', ') %></td>
         </tr>
         <% } %>
 

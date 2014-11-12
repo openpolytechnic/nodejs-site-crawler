@@ -9,12 +9,14 @@ var express = require('express')
 , request = require('request')
 , fs = require("fs")
 , util = require('util')
-, config = require('config');
+, config = require('config')
+, jf = require('jsonfile');
 
 var exec = require('child_process').exec;
 var jquery = fs.readFileSync("./public/javascript/jquery.js");
 var mongoose = require('mongoose');
-var dbconnect = mongoose.connect(config.dburl);
+//var dbconnect = mongoose.connect(config.dburl);
+var dbconnect = mongoose.connect("mongodb://localhost/test7");
 
 
 var Crawler = require('./models/crawler.js')(dbconnect);
@@ -53,7 +55,7 @@ var canParse = function(nextURL){
     }
 
     for(i = 0; i< skipUrls.length; i++){
-        if(nextURL.match(skipUrls[i])){
+        if(nextURL.match(new RegExp(skipUrls[i]))){
             return false;
         }
     }
@@ -66,21 +68,45 @@ var canParse = function(nextURL){
 
 var ideaTime = 0;
 var finallyCheck = false;
+var reachedMaxCheck = false;
 var exitOnNoTranscationAndURL = function(){
 
     if(ideaTime >= 30 && startedCrawler && finallyCheck){
-        currentResult.isrunning = false;
+        if(urlQueues.length == 0){
+            currentResult.isrunning = false;
+        }
         currentResult.save(function(err, currentResult){
-            console.log("Done.");
-            process.exit();
+            if(urlQueues.length != 0){
+                jsonfile =  'tmp/'+currentResult._id+'.json';
+                jf.writeFile(jsonfile,
+                    {
+                        resultid: currentResult._id,
+                        urlqueues: urlQueues,
+                        logincookie: LoginCookieString
+                    }, function(err) { //json file has four space indenting now
+                    clearInterval(existCheckTimmer);
+                    clearInterval(processQueueTimmer);
+                    exec('node ./cli.js "'+jsonfile+'" >>currentCli.log', function(error, stdout, stderr) {});
+                    setTimeout(function(){
+                        console.log("Sub process has been started output could be watched using currentCli.");
+                        process.exit();
+                    }, 10000);
+                })
+            }
+            else{
+                console.log("Done.");
+                process.exit();
+            }
         });
     }
     else if(ideaTime >= 30 && startedCrawler && !finallyCheck){
+        //console.log(util.inspect(process.memoryUsage()));
         console.log("Doing final check on broken links.");
         finallyCheck = true;
         ideaTime = 0;
         saveTranscation++;
-        ResultItem.find({resultid: currentResult._id,
+        ResultItem.ensureIndexes(function (err) {
+            ResultItem.find({resultid: currentResult._id,
             isbroken: true})
             .populate('from', 'brokenurls')
             .exec(function(error, items) {
@@ -98,10 +124,11 @@ var exitOnNoTranscationAndURL = function(){
                         }
                     }
                 }
+            });
         });
     }
 
-    if(urlQueues.length == 0 && saveTranscation == 0 && Object.keys(stillNeedToProcess).length == 0){
+    if((urlQueues.length == 0 || reachedMaxCheck) && saveTranscation == 0 && Object.keys(stillNeedToProcess).length == 0){
         ideaTime ++;
     }
     else{
@@ -109,22 +136,48 @@ var exitOnNoTranscationAndURL = function(){
     }
 };
 
-setInterval(exitOnNoTranscationAndURL, 1000);
+var existCheckTimmer = setInterval(exitOnNoTranscationAndURL, 1000);
 
 var urlQueues = [];
+var NoOfProccessURl = 0;
+var NoWaitingForTrigger = 0;
+var fetchProcessing = 0;
 var processQueue = function(){
-    if(Object.keys(stillNeedToProcess).length <= 0 && startedCrawler){
+    console.log("Checking the Queue", {
+        StillNeedToProcess: Object.keys(stillNeedToProcess).length,
+        URLQueueLength: urlQueues.length,
+        FetchSubProcess: fetchProcessing,
+        UrlIndexLength: Object.keys(urlIndexs).length,
+        NoURLProcessed: NoOfProccessURl
+    }, process.memoryUsage());
+    if(Object.keys(stillNeedToProcess).length <= 0 && startedCrawler
+        && NoWaitingForTrigger <= 0 && fetchProcessing <= 0){
+        if(NoOfProccessURl >= 100){
+            reachedMaxCheck = true;
+            return
+        }
         var limit = noOfCuncurrentCheck;
         if(urlQueues.length < limit){
             limit = urlQueues.length;
         }
-        for(i = 0; i < limit; i++){
-            fetchURL(urlQueues.pop());
+        NoOfProccessURl += limit;
+        for(var i = 0; i < limit; i++){
+            NoWaitingForTrigger++;
+            var urlid = urlQueues.pop();
+            ResultItem.findById(urlid,function(err, Item){
+                if(err){
+                    console.log("Process Queue", err);
+                }
+                NoWaitingForTrigger--;
+                fetchURL(Item);
+                Item = null;
+            });
+            urlid = null;
         }
     }
 }
 
-setInterval(processQueue, 5000);
+var processQueueTimmer = setInterval(processQueue, 5000);
 
 
 var saveTranscation = 0;
@@ -141,14 +194,18 @@ var saveTODB = function(item, callback){
 };
 
 
+var getURLKey = function(url) {
+    return url.substring(0, 950);
+};
+
 var fetchURL = function(currentUrl){
     console.log('Triggering', 'node ./processurl.js "'+currentUrl.url+'" "'+LoginCookieString+'"');
     stillNeedToProcess[currentUrl.url] = true;
     exec('node ./processurl.js "'+currentUrl.url+'" "'+LoginCookieString+'"', function(error, stdout, stderr) {
         stillNeedToProcess[currentUrl.url] = null;
         delete stillNeedToProcess[currentUrl.url];
-        if (error !== null || (stderr != null && stderr.trim() != '')) {
-            console.log('Something went wrong');
+        if (error !== null || (stderr != null && stderr.trim() != '') || stdout == undefined) {
+            console.log('Something went wrong for ', currentUrl.url);
             currentUrl.responsecode = 404;
             currentUrl.isbroken = true;
         }
@@ -171,50 +228,78 @@ var fetchURL = function(currentUrl){
                 saveTODB(currentUrl);
                 if(!currentUrl.isbroken && canParse(currentUrl.url)){
                     currentUrl.spellmistakes = response.spellMistakes;
-                    for(var i = 0; i < response.toURLs.length ; i ++){
-                        var newpath = response.toURLs[i].path;
-                        if(urlIndexs[newpath] != undefined){
-                            (function (newpath, fromtext, fromhref) {
-                                saveTranscation++;
-                                ResultItem.findByIdAndUpdate(urlIndexs[newpath], {$push: {
-                                    from: currentUrl._id,
-                                    fromlinktext: fromtext,
-                                    fromlinkhref: fromhref}},
-                                    { upsert: true },
-                                    function(err, oldItem){
-                                        saveTranscation--;
-                                        if(currentUrl.to.indexOf(oldItem._id) == -1){
-                                            currentUrl.to.push(oldItem._id);
-                                            if(oldItem.isbroken){
-                                                currentUrl.brokenurls.push(oldItem._id);
+                    (function(response, currentUrl){
+                        ResultItem.ensureIndexes(function (err) {
+                            for(var i = 0; i < response.toURLs.length ; i ++){
+                                var newpath = response.toURLs[i].path;
+                                fetchProcessing++;
+                                (function (newpath, fromtext, fromhref, currentUrl) {
+                                    ResultItem.findOne({key: getURLKey(newpath),
+                                            resultid: currentResult._id}, function(err,obj){
+                                            fetchProcessing--;
+                                            if(obj != null || urlIndexs[newpath] != undefined){
+                                                if(urlIndexs[newpath] != undefined){
+                                                    var objid = urlIndexs[newpath];
+                                                }
+                                                else {
+                                                    var objid = obj._id;
+                                                    urlIndexs[obj.url] = obj._id;
+                                                }
+                                                (function (objid, fromtext, fromhref) {
+                                                    saveTranscation++;
+                                                    ResultItem.findByIdAndUpdate(objid, {$push: {
+                                                            from: currentUrl._id,
+                                                            fromlinktext: fromtext,
+                                                            fromlinkhref: fromhref}},
+                                                        { upsert: true },
+                                                        function(err, oldItem){
+                                                            if(err) {
+                                                                console.log(err);
+                                                            }
+                                                            saveTranscation--;
+                                                            if(currentUrl.to.indexOf(oldItem._id) == -1){
+                                                                currentUrl.to.push(oldItem._id);
+                                                                if(oldItem.isbroken){
+                                                                    currentUrl.brokenurls.push(oldItem._id);
+                                                                }
+                                                                saveTODB(currentUrl);
+                                                            }
+                                                        }
+                                                    );
+                                                }(objid, fromtext, fromhref));
                                             }
-                                            saveTODB(currentUrl);
+                                            else{
+                                                var newItem = new ResultItem({
+                                                    resultid: currentResult._id,
+                                                    key: getURLKey(newpath),
+                                                    url: newpath,
+                                                    from: [currentUrl._id],
+                                                    fromlinktext: fromtext,
+                                                    fromlinkhref: fromhref
+                                                });
+                                                saveTranscation++;
+                                                newItem.save(function (err, newItem) {
+                                                    if(err){
+                                                        console.log(err);
+                                                    }
+                                                    saveTranscation--;
+                                                    currentUrl.to.push(newItem._id);
+                                                    saveTODB(currentUrl);
+                                                    urlIndexs[newItem.url] = newItem._id;
+                                                    urlQueues.push(newItem._id);
+                                                });
+                                                newItem = null;
+                                            }
+                                            obj = null;
                                         }
-                                    }
-                                );
-                            }(newpath, response.toURLs[i].text, response.toURLs[i].link));
-                        }
-                        else {
-                            var newItem = new ResultItem({
-                                resultid: currentResult._id,
-                                url: newpath,
-                                from: [currentUrl._id],
-                                fromlinktext: [response.toURLs[i].text],
-                                fromlinkhref: [response.toURLs[i].link]
-                            });
-                            saveTranscation++;
-                            newItem.save(function (err, newItem) {
-                                saveTranscation--;
-                                currentUrl.to.push(newItem._id);
-                                saveTODB(currentUrl);
-                                urlIndexs[newItem.url] = newItem._id;
-                                urlQueues.push(newItem);
-                            });
-                            newItem = null;
-                        }
-                        newpath = null;
+                                    );
 
-                    }
+                                }(newpath, response.toURLs[i].text, response.toURLs[i].link, currentUrl));
+                                newpath = null;
+                            }
+                        });
+                    }(response, currentUrl));
+                    response = null;
                 }
             }
         }
@@ -222,52 +307,101 @@ var fetchURL = function(currentUrl){
             currentResult.noofbrokenlink++;
             if(util.isArray(currentUrl.from) &&  currentUrl.from.length > 0){
                 for (var i = 0; i < currentUrl.from.length; i++) {
-                    ResultItem.findById(currentUrl.from[i], function(err, fromItem){
-                        fromItem.brokenurls.push(currentUrl._id);
-                        saveTODB(fromItem);
-                    });
+                    (function (currentUrl, id) {
+                        ResultItem.findById(currentUrl.from[i], function(err, fromItem){
+                            fromItem.brokenurls.push(currentUrl._id);
+                            saveTODB(fromItem);
+                            fromItem = null;
+                        });
+                    })(currentUrl, currentUrl.from[i]);
                 }
             }
             saveTODB(currentResult)
         }
 
         saveTODB(currentUrl);
+        currentUrl = null;
     });
 };
 
 var LoginCookieString = false;
 var startedCrawler = false;
-var startCrawler = function(crawl){
-    currentResult= new Result({
-        starturl: startURL,
-        isrunning: true
-    });
+var startCrawler = function(crawl, skipStart){
     var currentJar = request.jar();
     var tmpRequest = request.defaults({jar: currentJar});
-    saveTODB(currentResult, function (err, currentResult) {
-        crawl.lastresultid = currentResult._id;
-        saveTODB( crawl, function (err, crawl) {
-            tmpRequest.post(loginURL,
-                { form: loginParams },
-                function (error, response, body) {
-                    LoginCookieString = currentJar.getCookieString(loginURL);
-                    if (!error && response.statusCode < 400) {
+    crawl.lastresultid = currentResult._id;
+    saveTODB( crawl, function (err, crawl) {
+        tmpRequest.post(loginURL,
+            { form: loginParams },
+            function (error, response, body) {
+                LoginCookieString = currentJar.getCookieString(loginURL);
+                if (!error && response.statusCode < 400) {
+                    startedCrawler = true;
+                    if(skipStart){
+                        console.log("Waiting for the queue to be processed");
+                    }
+                    else{
                         currentUrl= new ResultItem({
                             resultid: currentResult._id,
+                            key: getURLKey(currentResult.starturl),
                             url: currentResult.starturl
                         });
-                        startedCrawler = true;
 
                         saveTODB(currentUrl, function (err, currentUrl) {
-                            urlIndexs[currentUrl.url] = currentUrl._id;
+                            //urlIndexs[currentUrl.url] = currentUrl._id;
                             currentRequest = request;
                             fetchURL(currentUrl);
                         });
                     }
                 }
-            );
-        });
+            }
+        );
     });
+};
+
+
+var findResult = function(crawl){
+
+    if(process.argv[2] != undefined ){
+        jf.readFile(process.argv[2], function(err, obj) {
+            if(obj.resultid == undefined || obj.urlqueues == undefined){
+                console.error("Not a valid file");
+                process.exit();
+            }
+            //LoginCookieString = obj.logincookie;
+            console.log("Running the Crawler from the file : "+process.argv[2]);
+            /*var urlqueuesids = [];
+            for(var i = 0; i < obj.urlqueues.length ; i++){
+                urlqueuesids.push(obj.urlqueues[i]._id);
+            }*/
+            urlQueues = obj.urlqueues;
+            Result.findById(obj.resultid, function (err, prevResult){
+                if (err){
+                    return console.error(err);
+                }
+                //ResultItem.find({ '_id': { $in: urlqueuesids}}, function(err, items){
+                    //urlQueues = items;
+                    currentResult = prevResult;
+                    startedCrawler = true;
+                    startCrawler(crawl, true);
+                    crawl = null;
+                    //console.log("Waiting for the queue to be processed");
+                //});
+            });
+        });
+    }
+    else{
+        currentResult= new Result({
+            starturl: startURL,
+            isrunning: true
+        });
+        saveTODB(currentResult, function (err, currentResult) {
+            if (err){
+                return console.error(err);
+            }
+            startCrawler(crawl, false);
+        });
+    }
 };
 
 
@@ -278,8 +412,7 @@ Crawler.find(function(err, crawlers){
     }
     if(crawlers.length > 0){
         currentCrawler = crawlers[0];
-        console.log("Last Resultid : ", currentCrawler.lastresultid);
-        startCrawler(currentCrawler);
+        findResult(currentCrawler);
     }
     else {
         currentCrawler = new Crawler({
@@ -289,7 +422,7 @@ Crawler.find(function(err, crawlers){
             if (err){
                 return console.error(err);
             }
-            startCrawler(currentCrawler);
+            findResult(currentCrawler);
         });
     }
 

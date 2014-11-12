@@ -10,9 +10,12 @@
     "ejs": "*",
     "jsdom": "*",
     "request": "*",
+    "tough-cookie": "*",
     "mongoose": "*",
+    "mongoose-paginate": "*",
+    "sleep": "*",
     "express-csv": "*",
-    "q": "*",
-    "config": "*"
+    "config": "*",
+    "jsonfile": "*"
   }
 }

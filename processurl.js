@@ -28,6 +28,7 @@ var statuscode = 0;
 var haserror = false;
 var isbroken = false;
 var spellmistakes = [];
+var skipUrls = config.skipUrls;
 
 var donePrintOutput= function(){
     console.log(JSON.stringify({
@@ -52,6 +53,10 @@ var validateURL = function(currentURL, nextURL){
     }
     nextURL = url.resolve(currentURL, nextURL);
 
+    if( nextURL.indexOf('http:') != 0 && nextURL.indexOf('https:') != 0 ){
+        return false;
+    }
+
     //remove anchor
     nextUrlObj = url.parse(nextURL);
     nextUrlObj.hash = '';
@@ -62,11 +67,20 @@ var validateURL = function(currentURL, nextURL){
     if(nextURL == url.format(currentURLObj)){
         return false;
     }
+
+    for(var i = 0; i< skipUrls.length; i++){
+        if(nextURL.match(new RegExp(skipUrls[i]))){
+            return false;
+        }
+    }
+
     nextUrlObj = null;
     currentURLObj = null;
     //console.log('Valid URL : ', nextURL);
     return nextURL;
 };
+
+
 
 var getExtraInformation = function(jQuery){
     if(jQuery('title').length > 0){
@@ -116,14 +130,25 @@ var parseContent = function(body){
         done: function (err, window) {
             //console.log("Number of links - ",window.jQuery('a').length);
             getExtraInformation(window.jQuery);
+            var toUrlsCombined = [];
             window.jQuery('a').each(function(index, item){
                 if(newpath = validateURL(CurrentUrl, window.jQuery(item).attr('href'))){
-                    toURLs.push({text :window.jQuery(item).text().trim(),
+                    /*toURLs.push({text: window.jQuery(item).text().trim(),
                                 link: window.jQuery(item).attr('href'),
-                                path: newpath});
+                                path: newpath});*/
+                    if(toUrlsCombined[newpath] != undefined){
+                        toUrlsCombined[newpath].text.push(window.jQuery(item).text().trim());
+                        toUrlsCombined[newpath].link.push(window.jQuery(item).attr('href'));
+                    }
+                    else {
+                        toUrlsCombined[newpath] = {text: [window.jQuery(item).text().trim()],
+                                                    link: [window.jQuery(item).attr('href')],
+                                                    path: newpath};
+                    }
                     newpath = null;
                 }
             });
+
             window.jQuery('*[src]').each(function(index, item){
                 if(newpath = validateURL(CurrentUrl, window.jQuery(item).attr('src'))){
                     var pathelements = window.jQuery(item).attr('src').trim().split('/');
@@ -143,12 +168,27 @@ var parseContent = function(body){
                         objectname = window.jQuery(item).text().trim().substring(0,24)
                     }
 
-                    toURLs.push({text : objectname,
+                    /*toURLs.push({text : objectname,
                         link: window.jQuery(item).attr('src'),
-                        path: newpath});
+                        path: newpath});*/
+                    if(toUrlsCombined[newpath] != undefined){
+                        toUrlsCombined[newpath].text.push(objectname);
+                        toUrlsCombined[newpath].link.push(window.jQuery(item).attr('src'));
+                    }
+                    else {
+                        toUrlsCombined[newpath] = {text: [objectname],
+                            link: [window.jQuery(item).attr('src')],
+                            path: newpath};
+                    }
+
                     newpath = objectname = null;
                 }
             });
+
+            for(var key in toUrlsCombined){
+                toURLs.push(toUrlsCombined[key]);
+            }
+
             spellcheck(window.jQuery('body').text(), function(){
                 donePrintOutput();
             });
@@ -170,10 +210,11 @@ tmpRequest(CurrentUrl, function (error, response, body) {
     statuscode = response.statusCode;
     isbroken = (response.statusCode >= 400);
     headers = response.headers;
-    if(headers['content-type'].indexOf('text/html') != -1){
+    if(headers['content-type'].indexOf('text/html') != -1 && body.trim() != ''){
         parseContent(body);
     }
     else {
         donePrintOutput();
     }
 });
+

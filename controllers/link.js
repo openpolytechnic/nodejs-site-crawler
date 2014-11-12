@@ -19,7 +19,6 @@ module.exports.controller = function(app) {
             .populate('brokenurls', 'url')
             .exec(function(err, result) {
                 if (err) return console.error(err);
-                console.log(result);
                 alertclass = 'alert-success';
                 if(result.isbroken){
                     alertclass = 'alert-danger';
@@ -41,13 +40,11 @@ module.exports.controller = function(app) {
         res.header("Access-Control-Allow-Origin", "*");
         res.header("Access-Control-Allow-Headers", "X-Requested-With");
         var url = req.param('url', false);
-        console.log(url.trim());
         if(url && url.trim() != ''){
             ResultItem.findOne({url: url.trim()})
                 .populate('brokenurls')
                 .sort('-checkedate')
                 .exec(function(error, item){
-                    console.log(item);
                     res.send(item)
                 });
         }

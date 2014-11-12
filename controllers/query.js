@@ -2,7 +2,8 @@
  * Created by vivraj on 10/09/14.
  */
 var app = require('../app.js')
-    , config = require('config');
+    , config = require('config')
+    , extend = require('util')._extend;
 
 var Result = require('../models/crawlerresult.js')(app.get('dbconnect'));
 var ResultItem = require('../models/crawlerresultitem.js')(app.get('dbconnect'));
@@ -13,7 +14,7 @@ module.exports.controller = function(app) {
     /**
      * a home page route
      */
-    app.get('/search/:resultid/:offset?', function(req, res) {
+    app.get('/query/:resultid/:offset?', function(req, res) {
         Result.findById(req.params.resultid, function(error, currentResult){
             var offset = 0;
             if(req.params.offset != undefined){
@@ -21,25 +22,27 @@ module.exports.controller = function(app) {
             }
             var filter = {resultid: req.params.resultid};
             var onlybroken = false;
+            var validJSON = false;
             if(req.query.onlybroken != undefined && req.query.onlybroken.trim() != ''){
                 filter.brokenurls = { '$not': { '$size': 0 } };
                 onlybroken = true;
             }
             else{
-                filter.brokenurls = null;
                 onlybroken = false;
             }
-            if(req.query.search != undefined && req.query.search.trim() != ''){
-                var query = req.query.search.trim();
-                var queryregex = new RegExp(query, "i");
-                var querycnd = [{title: queryregex},
-                                {tags: queryregex},
-                                {type: queryregex},
-                                {url: queryregex},
-                                {id: queryregex}];
+            if(req.query.query != undefined && req.query.query.trim() != ''){
+                try {
+                    filter = extend(filter, JSON.parse(req.query.query.trim()));
+                    validJSON = true;
+                } catch (e) {
+                    console.log(e)
+                    validJSON = false;
+                }
+            }
+
+            if(validJSON){
 
                 ResultItem.count(filter)
-                    .or(querycnd)
                     .exec(function(error, total){
                         if (error) {
                             console.error(error);
@@ -52,7 +55,6 @@ module.exports.controller = function(app) {
                             limit = config.resultLimit;
                         }
                         ResultItem.find(filter)
-                            .or(querycnd)
                             .limit(limit)
                             .skip(offset)
                             .populate('from', 'url')
@@ -61,12 +63,12 @@ module.exports.controller = function(app) {
                                 if(req.query.export != undefined && req.query.export.trim() != ''){
                                     res.locals.sendAsCSV(items, res);
                                 }
-                                var suffixurl = '?search='+req.query.search.trim();
+                                var suffixurl = '?query='+req.query.query.trim();
                                 if(onlybroken){
                                     suffixurl += '&onlybroken='+1;
                                 }
                                 var pagination = {total: total,
-                                    baseurl: '/search/'+req.params.resultid,
+                                    baseurl: '/query/'+req.params.resultid,
                                     suffixurl: suffixurl,
                                     offset: offset,
                                     limit: limit,
@@ -86,9 +88,9 @@ module.exports.controller = function(app) {
                                 if (error) {
                                     console.error(error);
                                 } else {
-                                    res.render('search', {app_name: app.get('name'),
-                                        title: 'Search For : <pre>'+query+'</pre>',
-                                        query: query,
+                                    res.render('query', {app_name: app.get('name'),
+                                        title: 'Query',
+                                        query: req.query.query.trim(),
                                         hasresults: true,
                                         onlybroken: onlybroken,
                                         resultid: req.params.resultid,
@@ -101,8 +103,8 @@ module.exports.controller = function(app) {
                 });
             }
             else {
-                res.render('search', {app_name: app.get('name'),
-                    title: 'Search ',
+                res.render('query', {app_name: app.get('name'),
+                    title: 'Query ',
                     query: '',
                     onlybroken: true,
                     hasresults: false,
@@ -119,7 +121,7 @@ module.exports.controller = function(app) {
 
     });
 
-    app.get('/search', function(req, res) {
+    app.get('/query', function(req, res) {
         res.status(404).render('error', {app_name: app.get('name'),
             title: 'Request is unknow',
             messages: ['The request could not be handle, please check the URL.']});

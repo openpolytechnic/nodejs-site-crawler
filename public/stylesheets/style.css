@@ -39,3 +39,7 @@ body > .container {
 .badge-lg {
     font-size: 1.25em;
 }
+
+table.table td a {
+	word-break: break-all;
+}

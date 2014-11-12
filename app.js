@@ -8,10 +8,11 @@ var express = require('express')
   , path = require('path')
   , fs = require('fs')
   , mongoose = require('mongoose')
-  , csv = require('express-csv');
+  , csv = require('express-csv')
+  , config = require('config');
 
 var app = module.exports = express();
-var dbconnect = mongoose.connect('mongodb://localhost/test');
+var dbconnect = mongoose.connect(config.dburl);
 
 // all environments
 app.set('name', 'Moodle Crawler');

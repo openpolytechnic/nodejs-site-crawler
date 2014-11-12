@@ -7,13 +7,14 @@ var mongoose = require('mongoose'),
 var Schema = mongoose.Schema;
 var crawlerresultitemSchema = new Schema({
     resultid: Schema.ObjectId,
-    url: String,
+    key: {type: String, index: true},
+    url: {type: String},
     title: {type: String, default: 'No title'},
     responsecode: {type: Number, default: 0},
     isbroken: {type: Boolean, default: false},
     header: {type: Schema.Types.Mixed, default: {}},
     type: {type: String, default: 'unknown'},
-    tags: {type: [String], default: []},
+    tags: {type: [String], default: [], index: true},
     checkedate: {type: Date, default: Date.now},
     from: [Schema.ObjectId],
     fromlinktext: [String],
@@ -24,6 +25,7 @@ var crawlerresultitemSchema = new Schema({
     spellmistakes: {type: [String], default: []}
 });
 
+crawlerresultitemSchema.index({ key: 1, resultid: 1 });
 
 crawlerresultitemSchema.methods.getMainTag = function(){
     var mainTag = false;

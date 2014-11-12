@@ -1,11 +1,12 @@
 /**
  * Created by vivraj on 10/09/14.
  */
-var app = require('../app.js');
+var app = require('../app.js')
+    , config = require('config');
 
 var Result = require('../models/crawlerresult.js')(app.get('dbconnect'));
 var ResultItem = require('../models/crawlerresultitem.js')(app.get('dbconnect'));
-var limit = 10;
+var limit = config.resultLimit;
 
 module.exports.controller = function(app) {
 
@@ -27,6 +28,9 @@ module.exports.controller = function(app) {
                 }
                 if(req.query.export != undefined && req.query.export.trim() != ''){
                     limit = total;
+                }
+                else {
+                    limit = config.resultLimit;
                 }
 
                 ResultItem.find(filter)

@@ -1,29 +1,40 @@
 {
-    "dburl": "mongodb://localhost/test",
-/*    "startURL": "http://drvpaph01-test.openpolytechnic.ac.nz/sandbox/vivraj/moodle/campus26",
+    "dburl": "mongodb://localhost/test7",
+    /*"startURL": "http://drvpaph01-test.openpolytechnic.ac.nz/sandbox/vivraj/moodle/campus26",
     "startPath": "sandbox/vivraj/moodle/campus26",
     "loginURL": "http://drvpaph01-test.openpolytechnic.ac.nz/sandbox/vivraj/moodle/campus26/login/index.php?bypass_sso=1",
     "loginParams": {
         "username":"webcrawler",
         "password":"Welcome1",
-        "login":"Login"}*/
-    "startURL": "http://drvpaph01-test.openpolytechnic.ac.nz/sandbox/vivraj/test/index.php",
+        "login":"Login"},*/
+    /*"startURL": "http://drvpaph01-test.openpolytechnic.ac.nz/sandbox/vivraj/test/index.php",
     "startPath": "sandbox/vivraj/test",
     "loginURL": "http://drvpaph01-test.openpolytechnic.ac.nz/sandbox/vivraj/test/login.php",
     "loginParams": {
         "username":"ABC",
         "password":"123",
+        "login":"Login"},*/
+    "startURL": "http://mcvpaph02-test.openpolytechnic.ac.nz",
+    "startPath": "",
+    "loginURL": "http://mcvpaph02-test.openpolytechnic.ac.nz/login/index.php?bypass_sso=1",
+    "loginParams": {
+        "username":"teststudent",
+        "password":"Welcome1",
         "login":"Login"},
-    "skipUrls": ["/\/admin/",
-                "/\/login\//",
-                "/\/iplookup\//",
-                "/\/message\//",
-                "/\/report\//",
-                "/\/user\//",
-                "/\/tag\//",
-                "/\/report\//",
-                "/\/user\//",
-                "/\/calendar\//",
-                "/\/badges\//"],
-    "noOfCuncurrentCheck": 10
+    "skipUrls": ["/admin",
+                "/login/",
+                "/iplookup/",
+                "/message/",
+                "/report/",
+                "/user/",
+                "/tag/",
+                "/report/",
+                "/user/",
+                "/calendar/",
+                "/badges/",
+                "&time="],
+    "noOfCuncurrentCheck": 1,
+
+
+    "resultLimit": 10
 }
