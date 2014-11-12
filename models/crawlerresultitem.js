@@ -2,8 +2,7 @@
  * Created by vivraj on 6/09/14.
  */
 
-var mongoose = require('mongoose'),
-    Q = require('q');
+var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 var crawlerresultitemSchema = new Schema({
     resultid: Schema.ObjectId,
