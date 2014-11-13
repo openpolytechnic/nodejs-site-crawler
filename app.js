@@ -13,6 +13,18 @@ var express = require('express')
 
 var app = module.exports = express();
 var dbconnect = mongoose.connect(config.dburl);
+// Authenticator
+app.use(express.basicAuth(function(user, pass) {
+    if(user === 'guest' && pass === 'pass'){
+        app.set('isadmin', false);
+        return true;
+    }
+    if(user === 'admin' && pass === 'pass'){
+        app.set('isadmin', true);
+        return true;
+    }
+    return false;
+}));
 
 // all environments
 app.set('name', 'Moodle Crawler');
