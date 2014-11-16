@@ -86,7 +86,7 @@ var exitOnNoTranscationAndURL = function(){
                     }, function(err) { //json file has four space indenting now
                     clearInterval(existCheckTimmer);
                     clearInterval(processQueueTimmer);
-                    exec('node ./cli.js "'+jsonfile+'" >>currentCli.log', function(error, stdout, stderr) {});
+                    exec('node ./cli.js "'+jsonfile+'" >> tmp/currentCli.log', function(error, stdout, stderr) {});
                     setTimeout(function(){
                         console.log("Sub process has been started output could be watched using currentCli.");
                         process.exit();
