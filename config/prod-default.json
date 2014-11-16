@@ -1,25 +1,11 @@
 {
-    "dburl": "mongodb://localhost/test7",
-    /*"startURL": "http://drvpaph01-test.openpolytechnic.ac.nz/sandbox/vivraj/moodle/campus26",
-    "startPath": "sandbox/vivraj/moodle/campus26",
-    "loginURL": "http://drvpaph01-test.openpolytechnic.ac.nz/sandbox/vivraj/moodle/campus26/login/index.php?bypass_sso=1",
-    "loginParams": {
-        "username":"webcrawler",
-        "password":"Welcome1",
-        "login":"Login"},*/
-    /*"startURL": "http://drvpaph01-test.openpolytechnic.ac.nz/sandbox/vivraj/test/index.php",
-    "startPath": "sandbox/vivraj/test",
-    "loginURL": "http://drvpaph01-test.openpolytechnic.ac.nz/sandbox/vivraj/test/login.php",
-    "loginParams": {
-        "username":"ABC",
-        "password":"123",
-        "login":"Login"},*/
-    "startURL": "http://mcvpaph02-test.openpolytechnic.ac.nz",
+    "dburl": "mongodb://localhost/moodlelkdb",
+    "startURL": "http://campus2.openpolytechnic.ac.nz",
     "startPath": "",
-    "loginURL": "http://mcvpaph02-test.openpolytechnic.ac.nz/login/index.php?bypass_sso=1",
+    "loginURL": "http://campus2.openpolytechnic.ac.nz/login/index.php?bypass_sso=1",
     "loginParams": {
         "username":"teststudent",
-        "password":"Welcome1",
+        "password":"2snKubjyrR",
         "login":"Login"},
     "skipUrls": ["/admin",
                 "/login/",
@@ -34,7 +20,5 @@
                 "/badges/",
                 "&time="],
     "noOfCuncurrentCheck": 1,
-
-
     "resultLimit": 10
 }
