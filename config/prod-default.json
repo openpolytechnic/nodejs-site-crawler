@@ -20,5 +20,15 @@
                 "/badges/",
                 "&time="],
     "noOfCuncurrentCheck": 1,
-    "resultLimit": 10
+    "resultLimit": 10,
+    "users": {
+        "guest": {
+            "password": "M00DLEpa55",
+            "isAdmin": false
+        },
+        "admin": {
+            "password": "AdminPa55LK",
+            "isAdmin": true
+        }
+    }
 }

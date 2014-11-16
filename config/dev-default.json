@@ -34,7 +34,15 @@
                 "/badges/",
                 "&time="],
     "noOfCuncurrentCheck": 1,
-
-
-    "resultLimit": 10
+    "resultLimit": 10,
+    "users": {
+        "guest": {
+            "password": "pass",
+            "isAdmin": false
+        },
+        "admin": {
+            "password": "pass",
+            "isAdmin": true
+        }
+    }
 }

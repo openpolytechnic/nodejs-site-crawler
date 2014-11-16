@@ -13,15 +13,14 @@ var express = require('express')
 
 var app = module.exports = express();
 var dbconnect = mongoose.connect(config.dburl);
-// Authenticator
+
+// Authenticator, users are set in config/default.json
 app.use(express.basicAuth(function(user, pass) {
-    if(user === 'guest' && pass === 'pass'){
-        app.set('isadmin', false);
-        return true;
-    }
-    if(user === 'admin' && pass === 'pass'){
-        app.set('isadmin', true);
-        return true;
+    if(config.users != undefined && config.users[user]){
+        if(pass === config.users[user].password){
+            app.set('isadmin', config.users[user].isAdmin);
+            return true;
+        }
     }
     return false;
 }));
@@ -29,7 +28,6 @@ app.use(express.basicAuth(function(user, pass) {
 // all environments
 app.set('name', 'Moodle Crawler');
 app.set('dbconnect', dbconnect);
-//app.set('port', process.env.PORT || 3000);
 app.set('port', process.env.PORT || 80);
 app.set('views', __dirname + '/views');
 app.set('view engine', 'ejs');
@@ -44,9 +42,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 if ('development' === app.get('env')) {
   app.use(express.errorHandler());
 }
-
-//require('./routes');
-//app.get('/', function(req, res){res.send("Hello world");});
 
 
 // dynamically include routes (Controller)
