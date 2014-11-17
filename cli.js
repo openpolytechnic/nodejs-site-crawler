@@ -15,8 +15,8 @@ var express = require('express')
 var exec = require('child_process').exec;
 var jquery = fs.readFileSync("./public/javascript/jquery.js");
 var mongoose = require('mongoose');
-//var dbconnect = mongoose.connect(config.dburl);
-var dbconnect = mongoose.connect("mongodb://localhost/test7");
+var dbconnect = mongoose.connect(config.dburl);
+//var dbconnect = mongoose.connect("mongodb://localhost/test7");
 
 
 var Crawler = require('./models/crawler.js')(dbconnect);
