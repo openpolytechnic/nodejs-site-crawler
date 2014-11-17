@@ -21,6 +21,7 @@
 		"/blog/edit.php",
 		"edit.php",
 		"create.php",
+		"delete.php",
                 "&time="],
     "noOfCuncurrentCheck": 1,
     "resultLimit": 10,
