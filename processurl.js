@@ -76,11 +76,17 @@ var validateURL = function(currentURL, nextURL){
 
     nextUrlObj = null;
     currentURLObj = null;
-    //console.log('Valid URL : ', nextURL);
     return nextURL;
 };
 
-
+var checkSameDomain = function(checkurl){
+    if(checkurl == undefined || config.startURL == undefined){
+        return false;
+    }
+    sourceUrlObj = url.parse(config.startURL);
+    currentURLObj = url.parse(checkurl);
+    return (sourceUrlObj.host == currentURLObj.host);
+}
 
 var getExtraInformation = function(jQuery){
     if(jQuery('title').length > 0){
@@ -107,6 +113,11 @@ var getExtraInformation = function(jQuery){
 var spellcheck = function(content, callback){
     content = content.replace(/"/g, '\"');
     content = content.replace(/\n/g, ' ');
+    setTimeout(function(){
+        if(callback != undefined && callback){
+            callback();
+        }
+    }, 30000);//Wait for 20 seconds before timming out
     exec('echo "'+content+'"|aspell list -a >&1', function(error, stdout, stderr) {
         if (error !== null || (stderr != null && stderr.trim() != '')) {
 
@@ -133,9 +144,6 @@ var parseContent = function(body){
             var toUrlsCombined = [];
             window.jQuery('a').each(function(index, item){
                 if(newpath = validateURL(CurrentUrl, window.jQuery(item).attr('href'))){
-                    /*toURLs.push({text: window.jQuery(item).text().trim(),
-                                link: window.jQuery(item).attr('href'),
-                                path: newpath});*/
                     if(toUrlsCombined[newpath] != undefined){
                         toUrlsCombined[newpath].text.push(window.jQuery(item).text().trim());
                         toUrlsCombined[newpath].link.push(window.jQuery(item).attr('href'));
@@ -148,7 +156,7 @@ var parseContent = function(body){
                     newpath = null;
                 }
             });
-
+            //console.log("Number of other source - ",window.jQuery('*[src]').length);
             window.jQuery('*[src]').each(function(index, item){
                 if(newpath = validateURL(CurrentUrl, window.jQuery(item).attr('src'))){
                     var pathelements = window.jQuery(item).attr('src').trim().split('/');
@@ -168,9 +176,6 @@ var parseContent = function(body){
                         objectname = window.jQuery(item).text().trim().substring(0,24)
                     }
 
-                    /*toURLs.push({text : objectname,
-                        link: window.jQuery(item).attr('src'),
-                        path: newpath});*/
                     if(toUrlsCombined[newpath] != undefined){
                         toUrlsCombined[newpath].text.push(objectname);
                         toUrlsCombined[newpath].link.push(window.jQuery(item).attr('src'));
@@ -188,7 +193,7 @@ var parseContent = function(body){
             for(var key in toUrlsCombined){
                 toURLs.push(toUrlsCombined[key]);
             }
-
+            //console.log("Doing spell check");
             spellcheck(window.jQuery('body').text(), function(){
                 donePrintOutput();
             });
@@ -210,7 +215,7 @@ tmpRequest(CurrentUrl, function (error, response, body) {
     statuscode = response.statusCode;
     isbroken = (response.statusCode >= 400);
     headers = response.headers;
-    if(headers['content-type'].indexOf('text/html') != -1 && body.trim() != ''){
+    if(headers['content-type'].indexOf('text/html') != -1 && body.trim() != '' && checkSameDomain(CurrentUrl)){
         parseContent(body);
     }
     else {
