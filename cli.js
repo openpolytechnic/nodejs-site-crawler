@@ -199,9 +199,9 @@ var getURLKey = function(url) {
 };
 
 var fetchURL = function(currentUrl){
-    console.log('Triggering', 'node ./processurl.js "'+currentUrl.url+'" "'+LoginCookieString+'"');
+    console.log('Triggering', 'node ./processurl.js "'+currentUrl.url.split('"').join('\"')+'" "'+LoginCookieString+'"');
     stillNeedToProcess[currentUrl.url] = true;
-    exec('node ./processurl.js "'+currentUrl.url+'" "'+LoginCookieString+'"', function(error, stdout, stderr) {
+    exec('node ./processurl.js "'+currentUrl.url.split('"').join('\"')+'" "'+LoginCookieString+'"', function(error, stdout, stderr) {
         stillNeedToProcess[currentUrl.url] = null;
         delete stillNeedToProcess[currentUrl.url];
         if (error !== null || (stderr != null && stderr.trim() != '') || stdout == undefined) {
