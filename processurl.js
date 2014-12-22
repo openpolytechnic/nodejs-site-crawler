@@ -142,7 +142,7 @@ var parseContent = function(body){
             //console.log("Number of links - ",window.jQuery('a').length);
             getExtraInformation(window.jQuery);
             var toUrlsCombined = [];
-            window.jQuery('a').each(function(index, item){
+            window.jQuery('body a').each(function(index, item){
                 if(newpath = validateURL(CurrentUrl, window.jQuery(item).attr('href'))){
                     if(toUrlsCombined[newpath] != undefined){
                         toUrlsCombined[newpath].text.push(window.jQuery(item).text().trim());
@@ -157,7 +157,7 @@ var parseContent = function(body){
                 }
             });
             //console.log("Number of other source - ",window.jQuery('*[src]').length);
-            window.jQuery('*[src]').each(function(index, item){
+            window.jQuery('body iframe[src], body img[src], body object[src], body embed[src], body source[src]').each(function(index, item){
                 if(newpath = validateURL(CurrentUrl, window.jQuery(item).attr('src'))){
                     var pathelements = window.jQuery(item).attr('src').trim().split('/');
                     if(pathelements.length > 1){
@@ -215,7 +215,9 @@ tmpRequest(CurrentUrl, function (error, response, body) {
     statuscode = response.statusCode;
     isbroken = (response.statusCode >= 400);
     headers = response.headers;
-    if(headers['content-type'].indexOf('text/html') != -1 && body.trim() != '' && checkSameDomain(CurrentUrl)){
+    //Make sure the request and response URL are of same domain as start url
+    if(checkSameDomain(CurrentUrl) && checkSameDomain(response.request.uri.href)
+        && headers['content-type'].indexOf('text/html') != -1 && body.trim() != ''){
         parseContent(body);
     }
     else {
