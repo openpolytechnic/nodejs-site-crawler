@@ -89,12 +89,14 @@ var exitOnNoTranscationAndURL = function(){
                     exec('node ./cli.js "'+jsonfile+'" >> tmp/currentCli.log', function(error, stdout, stderr) {});
                     setTimeout(function(){
                         console.log("Sub process has been started output could be watched using currentCli.");
+			mongoose.disconnect();
                         process.exit();
                     }, 10000);
                 })
             }
             else{
                 console.log("Done.");
+		mongoose.disconnect();
                 process.exit();
             }
         });

@@ -26,7 +26,7 @@ module.exports.controller = function(app) {
                 onlybroken = true;
             }
             else{
-                filter.brokenurls = null;
+                //filter.brokenurls = null;
                 onlybroken = false;
             }
             if(req.query.search != undefined && req.query.search.trim() != ''){

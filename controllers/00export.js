@@ -10,7 +10,7 @@ var Result = require('../models/crawlerresult.js')(app.get('dbconnect'));
 module.exports.controller = function(app) {
 
     app.all('*', function(req, res, next){
-        var allowexport = ['tag', 'search', 'course', 'courses', 'categories', 'result'];
+        var allowexport = ['tag', 'search', 'course', 'courses', 'categories', 'result', 'query'];
         var pathtype = req.path.split('/')[1];
         res.locals.canexport = false;
         if(allowexport.indexOf(pathtype) != -1){
