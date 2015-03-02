@@ -82,11 +82,11 @@
     "resultLimit": 10,
     "users": {
         "guest": {
-            "password": "M00DLEpa55",
+            "password": "0000000",
             "isAdmin": false
         },
         "admin": {
-            "password": "AdminPa55LK",
+            "password": "1111111",
             "isAdmin": true
         }
     }
